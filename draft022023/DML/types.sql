@@ -1,26 +1,8 @@
-DROP TABLE IF EXISTS type_matchups;
-DROP TABLE IF EXISTS monster_types;
-DROP TABLE IF EXISTS type_interactions;
-DROP TABLE IF EXISTS type_effectiveness;
-DROP VIEW IF EXISTS typechart_as_strings;
-
-CREATE TABLE type_matchups (
-    id    INTEGER PRIMARY KEY,
-    name  TEXT NOT NULL
-);
-
-CREATE TABLE monster_types(
-    id    INTEGER PRIMARY KEY,
-    name  TEXT NOT NULL
-);
-
 INSERT INTO type_matchups(name) VALUES ("HEALS");
 INSERT INTO type_matchups(name) VALUES ("IMMUNE");
 INSERT INTO type_matchups(name) VALUES ("WEAK");
 INSERT INTO type_matchups(name) VALUES ("NORMAL");
 INSERT INTO type_matchups(name) VALUES ("STRONG");
-
-
 
 INSERT INTO monster_types(name) VALUES ("FLAME");
 INSERT INTO monster_types(name) VALUES ("WATER");
@@ -38,20 +20,6 @@ INSERT INTO monster_types(name) VALUES ("UNDEAD");
 INSERT INTO monster_types(name) VALUES ("DRAGON");
 INSERT INTO monster_types(name) VALUES ("NATURE");
 INSERT INTO monster_types(name) VALUES ("INDUST");
-
-
-/*For now, this modifies the strength of the attack itself rather
-than (directly) calcing how much is taken from health*/
-
-CREATE TABLE type_interactions(
-    id    INTEGER PRIMARY KEY,
-    effect_1 INTEGER NOT NULL,
-    effect_2 INTEGER NOT NULL,
-    result FLOAT,
-    FOREIGN KEY (effect_1) REFERENCES type_matchups(id),
-    FOREIGN KEY (effect_2) REFERENCES type_matchups(id)
-);
-
 
 INSERT INTO type_interactions(effect_1, effect_2, result)
 SELECT e1.id, e2.id,
@@ -104,17 +72,6 @@ SELECT e1.id, e2.id,
 FROM type_matchups e1
 JOIN type_matchups e2 ON e1.name = 'HEALS';
 
-
-
-CREATE TABLE  type_effectiveness(
-    id      INTEGER PRIMARY KEY,
-    atk_type  INTEGER NOT NULL,
-    def_type INTEGER NOT NULL,
-    effect  INTEGER NOT NULL,
-    FOREIGN KEY (atk_type) REFERENCES monster_types(id),
-    FOREIGN KEY (def_type) REFERENCES monster_types(id),
-    FOREIGN KEY (effect) REFERENCES type_matchups(id)
-);
 
 
 INSERT INTO type_effectiveness(def_type, atk_type, effect)
@@ -498,18 +455,3 @@ SELECT td.id, ta.id,
     END
 FROM monster_types ta
 JOIN monster_types td ON td.name = 'INDUSTRIAL';
-
-CREATE VIEW typechart_as_strings AS
-    SELECT
-           x.id,
-           t_1.name AS attacking_type,
-           t_2.name AS defending_type,
-           e.name   AS damage_effect
-        FROM type_effectiveness x
-        JOIN monster_types t_1
-            ON t_1.id = x.atk_type
-        JOIN monster_types t_2
-            ON t_2.id = x.def_type
-        JOIN type_matchups e
-            ON e.id = x.effect
-        ORDER BY t_2.id;
