@@ -3,6 +3,7 @@ import os
 import sqlite3
 
 def write_to_db(db_name, command_list):
+    os.remove(db_name)
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
     for query in command_list:
@@ -29,6 +30,8 @@ def main(args):
     for arg in args:
         if arg.endswith(".db") == False and arg.endswith("/*") == False:
             dirs.append(arg)
+        if arg.startswith("-"): 
+            dirs.remove(arg.strip("-"))
         elif arg.endswith(".db") and not arg.endswith("/*"):
             the_database = arg
         elif arg.endswith("/*"):
