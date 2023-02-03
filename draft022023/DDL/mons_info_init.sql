@@ -1,12 +1,11 @@
-DROP TABLE IF EXISTS stats;
+DROP TABLE IF EXISTS base_stats;
 DROP TABLE IF EXISTS type_combos;
 DROP TABLE IF EXISTS species;
 
 
 CREATE table species(
     id INTEGER PRIMARY KEY,
-    name TEXT NOT NULL,
-    description TEXT);
+    name TEXT NOT NULL);
 
 /*TODO: change this to accomadate for genetics/exp when those are implemented*/
 CREATE TABLE base_stats(
@@ -18,7 +17,6 @@ CREATE TABLE base_stats(
     spd INTEGER NOT NULL,
     hp INTEGER NOT NULL,
     mp INTEGER NOT NULL,
-    acc INTEGER NOT NULL,
     m_id INTEGER NOT NULL,
     FOREIGN KEY (m_id) REFERENCES species(id)
 );
