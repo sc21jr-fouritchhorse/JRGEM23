@@ -64,7 +64,7 @@ INSERT INTO species(name)
     VALUES('Rat');
 INSERT INTO base_stats(m_id, atk, def, spd, crg, wsd, hp, mp)
     VALUES((SELECT id FROM species  WHERE name = 'Rat'),
-                  12, 9, 15, 11, 8, 20, 18);
+                  15, 11, 22, 11, 8, 20, 18);
 INSERT INTO type_combos(m_id, t1_id, t2_id)
     VALUES ((SELECT id FROM species WHERE name = 'Rat'),
             (SELECT id FROM monster_types t WHERE name = 'BEAST'),
@@ -75,7 +75,7 @@ INSERT INTO species(name)
     VALUES('Cigarette');
 INSERT INTO base_stats(m_id, atk, def, spd, crg, wsd, hp, mp)
     VALUES ((SELECT  id FROM species  WHERE name = 'Cigarette'),
-             7, 5, 10, 17, 10, 17, 34);
+             15, 5, 10, 25, 10, 30, 34);
 INSERT INTO type_combos(m_id, t1_id, t2_id)
     VALUES ((SELECT id FROM species WHERE name = 'Cigarette'),
            (SELECT id FROM monster_types WHERE name = 'FLAME'),
@@ -86,7 +86,7 @@ INSERT INTO species(name)
     VALUES('Pidgeon');
 INSERT INTO base_stats(m_id, atk, def, spd, crg, wsd, hp, mp)
     VALUES ((SELECT id FROM species WHERE name = 'Pidgeon'),
-             9, 12, 12, 13, 11, 23, 24);
+             11, 12, 12, 13, 11, 23, 24);
 INSERT INTO type_combos(m_id, t1_id, t2_id)
     VALUES ((SELECT id FROM species WHERE name = 'Pidgeon'),
             (SELECT id FROM monster_types WHERE name = 'BEAST'),
@@ -108,7 +108,7 @@ INSERT INTO species(name)
     VALUES('Uprooted weed');
 INSERT INTO base_stats(m_id, atk, def, spd, crg, wsd, hp, mp)
     VALUES((SELECT id FROM species WHERE name = 'Uprooted weed'),
-            12, 16, 22, 25, 14, 35, 30);
+            12, 16, 15, 25, 14, 35, 30);
 INSERT INTO type_combos(m_id, t1_id, t2_id)
     VALUES((SELECT id FROM species WHERE name = 'Uprooted weed'),
            (SELECT id FROM monster_types WHERE name = 'PLANT'),
