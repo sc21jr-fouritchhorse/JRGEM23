@@ -60,56 +60,90 @@ Three electric sheep stuck together
 
 */
 
-INSERT INTO species(name)
-    VALUES('Rat');
-INSERT INTO base_stats(m_id, atk, def, spd, crg, wsd, hp, mp)
-    VALUES((SELECT id FROM species  WHERE name = 'Rat'),
-                  15, 11, 22, 11, 8, 20, 18);
-INSERT INTO type_combos(m_id, t1_id, t2_id)
-    VALUES ((SELECT id FROM species WHERE name = 'Rat'),
-            (SELECT id FROM monster_types t WHERE name = 'BEAST'),
-            (SELECT id FROM monster_types t WHERE name = 'BEAST'));
 
 
 INSERT INTO species(name)
-    VALUES('Cigarette');
-INSERT INTO base_stats(m_id, atk, def, spd, crg, wsd, hp, mp)
-    VALUES ((SELECT  id FROM species  WHERE name = 'Cigarette'),
-             15, 5, 10, 25, 10, 30, 34);
-INSERT INTO type_combos(m_id, t1_id, t2_id)
-    VALUES ((SELECT id FROM species WHERE name = 'Cigarette'),
-           (SELECT id FROM monster_types WHERE name = 'FLAME'),
-           (SELECT id FROM monster_types WHERE name = 'FLAME'));
-
+VALUES('Rat');
 
 INSERT INTO species(name)
-    VALUES('Pidgeon');
-INSERT INTO base_stats(m_id, atk, def, spd, crg, wsd, hp, mp)
-    VALUES ((SELECT id FROM species WHERE name = 'Pidgeon'),
-             11, 12, 12, 13, 11, 23, 24);
-INSERT INTO type_combos(m_id, t1_id, t2_id)
-    VALUES ((SELECT id FROM species WHERE name = 'Pidgeon'),
-            (SELECT id FROM monster_types WHERE name = 'BEAST'),
-            (SELECT id FROM monster_types WHERE name = 'WIND'));
-
+VALUES('Cigarette');
 
 INSERT INTO species(name)
-    VALUES('Broken bottle');
-INSERT INTO base_stats(m_id, atk, def, spd, crg, wsd, hp, mp)
-    VALUES((SELECT id FROM species WHERE name = 'Broken bottle'),
-            15, 10, 9, 13, 8, 17, 20);
-INSERT INTO type_combos(m_id, t1_id, t2_id)
-    VALUES((SELECT id FROM species WHERE name = 'Broken bottle'),
-           (SELECT id FROM monster_types WHERE name = 'WATER'),
-           (SELECT id FROM monster_types WHERE name = 'WATER'));
-
+VALUES('Pidgeon');
 
 INSERT INTO species(name)
-    VALUES('Uprooted weed');
-INSERT INTO base_stats(m_id, atk, def, spd, crg, wsd, hp, mp)
-    VALUES((SELECT id FROM species WHERE name = 'Uprooted weed'),
-            12, 16, 15, 25, 14, 35, 30);
-INSERT INTO type_combos(m_id, t1_id, t2_id)
-    VALUES((SELECT id FROM species WHERE name = 'Uprooted weed'),
-           (SELECT id FROM monster_types WHERE name = 'PLANT'),
-           (SELECT id FROM monster_types WHERE name = 'PLANT'))
+VALUES('Broken bottle');
+
+INSERT INTO species(name)
+VALUES('Uprooted weed');
+
+--Insert statistics data
+INSERT INTO statistics(holder_id_fk, stat_type, val)
+SELECT m.id, s.id,
+CASE s.long_name
+WHEN 'ATTACK' THEN 15
+WHEN 'DEFENSE' THEN 11
+WHEN 'SPEED' THEN 22
+WHEN 'COURAGE' THEN 11
+WHEN 'WISDOM' THEN 8
+WHEN 'HP' THEN 20
+WHEN 'MP' THEN 18
+END
+FROM stat_types s
+JOIN species m ON m.name = 'Rat';
+
+INSERT INTO statistics(holder_id_fk, stat_type, val)
+SELECT m.id, s.id,
+CASE s.long_name
+WHEN 'ATTACK' THEN 15
+WHEN 'DEFENSE' THEN 5
+WHEN 'SPEED' THEN 10
+WHEN 'COURAGE' THEN 25
+WHEN 'WISDOM' THEN 10
+WHEN 'HP' THEN 30
+WHEN 'MP' THEN 34
+END
+FROM stat_types s
+JOIN species m ON m.name = 'Cigarette';
+
+INSERT INTO statistics(holder_id_fk, stat_type, val)
+SELECT m.id, s.id,
+CASE s.long_name
+WHEN 'ATTACK' THEN 11
+WHEN 'DEFENSE' THEN 12
+WHEN 'SPEED' THEN 12
+WHEN 'COURAGE' THEN 13
+WHEN 'WISDOM' THEN 11
+WHEN 'HP' THEN 23
+WHEN 'MP' THEN 24
+END
+FROM stat_types s
+JOIN species m ON m.name = 'Pidgeon';
+
+INSERT INTO statistics(holder_id_fk, stat_type, val)
+SELECT m.id, s.id,
+CASE s.long_name
+WHEN 'ATTACK' THEN 15
+WHEN 'DEFENSE' THEN 10
+WHEN 'SPEED' THEN 9
+WHEN 'COURAGE' THEN 13
+WHEN 'WISDOM' THEN 8
+WHEN 'HP' THEN 17
+WHEN 'MP' THEN 20
+END
+FROM stat_types s
+JOIN species m ON m.name = 'Broken bottle';
+
+INSERT INTO statistics(holder_id_fk, stat_type, val)
+SELECT m.id, s.id,
+CASE s.long_name
+WHEN 'ATTACK' THEN 12
+WHEN 'DEFENSE' THEN 16
+WHEN 'SPEED' THEN 15
+WHEN 'COURAGE' THEN 25
+WHEN 'WISDOM' THEN 14
+WHEN 'HP' THEN 35
+WHEN 'MP' THEN 30
+END
+FROM stat_types s
+JOIN species m ON m.name = 'Uprooted weed';

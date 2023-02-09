@@ -7,10 +7,10 @@ DROP TABLE IF EXISTS skillsets;
 
 CREATE TABLE statuses(
 	id INTEGER PRIMARY KEY,
-	name TEXT NOT NULL
+	name TEXT NOT NULL,
 	related_stat_id INTEGER,
 	reduction_factor FLOAT,
-	FOREIGN KEY (related_stat_id) REFERENCES statistic(id)
+	FOREIGN KEY (related_stat_id) REFERENCES stat_types(id)
 );
 
 CREATE TABLE move_effect(
@@ -19,7 +19,7 @@ CREATE TABLE move_effect(
     related_stat INTEGER,
 	related_status INTEGER,
     factor FLOAT, 
-    FOREIGN KEY (related_stat) REFERENCES statistic(id),
+    FOREIGN KEY (related_stat) REFERENCES stat_types(id),
 	FOREIGN KEY (related_status) REFERENCES statuses(id)
 );
 

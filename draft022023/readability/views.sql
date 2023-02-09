@@ -17,20 +17,4 @@ CREATE VIEW typechart_as_strings AS
             ON e.id = x.effect
         ORDER BY t_2.id;
 
-CREATE VIEW monsters_as_strings_with_stats AS
-    SELECT
-        y.id,
-        y.name, 
-        mt_1.name AS type_1, 
-        mt_2.name AS type_2,
-        bs.hp, bs.mp, bs.atk, bs.def, bs.spd, bs.crg, bs.wsd
-    FROM species y
-    JOIN type_combos tc 
-        ON y.id = tc.m_id
-        JOIN monster_types mt_1 
-            ON tc.t1_id = mt_1.id
-        JOIN monster_types mt_2 
-            ON tc.t2_id = mt_2.id
-    JOIN base_stats bs 
-        ON y.id = bs.m_id
-    ORDER BY y.id DESC;
+CREATE VIEW monsters_with_types_and_stats AS
