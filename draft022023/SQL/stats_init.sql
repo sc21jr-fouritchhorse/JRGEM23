@@ -10,9 +10,19 @@ CREATE TABLE stats (
     name_short TEXT NOT NULL
 );
 
-CREATE TABLE stat_collections(
+*CREATE TABLE stat_collections(
     id INTEGER PRIMARY KEY,
-    owner_id INTEGER NOT NULL
+    owner_id INTEGER NOT NULL,
+    atk_instance INTEGER NOT NULL,
+    def_instance INTEGER NOT NULL,
+    spd_instance INTEGER NOT NULL,
+    crg_instance INTEGER NOT NULL,
+    wsd_instance INTEGER NOT NULL,
+    FOREIGN KEY (atk_instance) REFERENCES stat_instances(id),
+    FOREIGN KEY (def_instance) REFERENCES stat_instances(id),
+    FOREIGN KEY (spd_instance) REFERENCES stat_instances(id),
+    FOREIGN KEY (crg_instance) REFERENCES stat_instances(id),
+    FOREIGN KEY (wsd_instance) REFERENCES stat_instances(id)
 );
 
 CREATE TABLE stat_instances(
@@ -20,17 +30,5 @@ CREATE TABLE stat_instances(
     value INTEGER NOT NULL,
     stat_type INTEGER NOT NULL,
     set_code INTEGER NOT NULL,
-    FOREIGN KEY (stat_type) REFERENCES stats(id),
-    FOREIGN KEY (set_code) REFERENCES stat_collections(id)
+    FOREIGN KEY (stat_type) REFERENCES stats(id)
 );
-
-CREATE UNIQUE INDEX stat_count ON stat_instances(set_code, stat_type);
-
-CREATE TRIGGER stat_count_check
-BEFORE INSERT ON stat_instances
-BEGIN
-  SELECT CASE
-    WHEN (SELECT COUNT(*) FROM stat_instances WHERE set_code = NEW.set_code AND stat_type = NEW.stat_type) > 5 THEN
-      RAISE(ABORT, 'Too many instances of stat type in set code')
-    END;
-END;
