@@ -1,27 +1,27 @@
 INSERT INTO type_matchups(name)
-VALUES ("HEALS"),
-       ("IMMUNE"),
-       ("WEAK"),
-       ("NORMAL"),
-       ("STRONG");
+VALUES ('HEALS'),
+       ('IMMUNE'),
+       ('WEAK'),
+       ('NORMAL'),
+       ('STRONG');
 
 INSERT INTO monster_types(name)
-VALUES ("FLAME"),
-       ("WATER"),
-       ("PLANT"),
-       ("ICE"),
-       ("EARTH"),
-       ("WIND"),
-       ("BOLT"),
-       ("SPIRIT"),
-       ("HERO"),
-       ("HOLY"),
-       ("DEMON"),
-       ("BEAST"),
-       ("UNDEAD"),
-       ("DRAGON"),
-       ("NATURE"),
-       ("INDUST");
+VALUES ('FLAME'),
+       ('WATER'),
+       ('PLANT'),
+       ('ICE'),
+       ('EARTH'),
+       ('WIND'),
+       ('BOLT'),
+       ('SPIRIT'),
+       ('HERO'),
+       ('HOLY'),
+       ('DEMON'),
+       ('BEAST'),
+       ('UNDEAD'),
+       ('DRAGON'),
+       ('NATURE'),
+       ('INDUST');
 
 INSERT INTO type_interactions(effect_1, effect_2, result)
 SELECT e1.id, e2.id,

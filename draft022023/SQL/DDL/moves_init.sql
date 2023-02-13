@@ -17,11 +17,20 @@ CREATE TABLE statuses
 CREATE TABLE move_effects
 (
     id             INTEGER PRIMARY KEY,
-    related_stat   INTEGER NOT NULL,
+    name           TEXT NOT NULL,
+    related_stat   INTEGER,
+    related_status INTEGER,
     factor_percent INTEGER NOT NULL,
     linked_effect  INTEGER,
     FOREIGN KEY (related_stat) REFERENCES stats (id),
+    FOREIGN KEY (related_status) REFERENCES statuses(id),
     FOREIGN KEY (linked_effect) REFERENCES move_effects (id)
+);
+
+CREATE TABLE move_categories
+(
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL
 );
 
 CREATE TABLE moves
@@ -32,13 +41,11 @@ CREATE TABLE moves
     power          INTEGER NOT NULL,
     cost           INTEGER NOT NULL,
     hit_percent    INTEGER NOT NULL,
-    effect_percent INTEGER,
+    effect_percent INTEGER NOT NULL,
     move_category  INTEGER NOT NULL,
     type           INTEGER NOT NULL,
     effect         INTEGER,
-    status         INTEGER,
     FOREIGN KEY (type) REFERENCES monster_types (id),
     FOREIGN KEY (effect) REFERENCES move_effects (id),
-    FOREIGN KEY (status) REFERENCES statuses (id),
-    CHECK ( move_category >= 1 AND move_category <= 3 )
+    FOREIGN KEY (move_category) REFERENCES move_categories(id)
 );
