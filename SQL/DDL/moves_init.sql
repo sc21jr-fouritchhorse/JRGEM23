@@ -1,11 +1,12 @@
 DROP TABLE IF EXISTS moves;
 DROP TABLE IF EXISTS statuses;
 DROP TABLE IF EXISTS move_effects;
+DROP TABLE IF EXISTS move_categories;
 
 CREATE TABLE statuses
 (
     id             INTEGER PRIMARY KEY,
-    name           TEXT    NOT NULL,
+    status_name    TEXT    NOT NULL,
     short_name     TEXT    NOT NULL,
     min_turns      INTEGER NOT NULL,
     max_turns      INTEGER NOT NULL,
@@ -17,7 +18,7 @@ CREATE TABLE statuses
 CREATE TABLE move_effects
 (
     id             INTEGER PRIMARY KEY,
-    name           TEXT NOT NULL,
+    effect_name    TEXT NOT NULL,
     related_stat   INTEGER,
     related_status INTEGER,
     factor_percent INTEGER NOT NULL,
@@ -30,13 +31,13 @@ CREATE TABLE move_effects
 CREATE TABLE move_categories
 (
     id INTEGER PRIMARY KEY,
-    name TEXT NOT NULL
+    category_name TEXT NOT NULL
 );
 
 CREATE TABLE moves
 (
     id             INTEGER PRIMARY KEY,
-    name           TEXT    NOT NULL,
+    move_name           TEXT    NOT NULL,
     descrip        TEXT,
     power          INTEGER NOT NULL,
     cost           INTEGER NOT NULL,
