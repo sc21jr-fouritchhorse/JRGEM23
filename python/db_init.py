@@ -5,9 +5,6 @@ import re
 import os
 import sqlite3
 
-sql_dir = '../SQL/'
-table_dir = 'DDL/'
-data_dir = 'DML/'
 
 
 def load_queries_from_file(filename):
@@ -23,38 +20,50 @@ def get_priority(filename):
         if match:
             return int(match.group())
         else:
-            return 0
+            return -1
 
 
-table_files = sorted(glob.glob(sql_dir + table_dir + '*.sql'), key=get_priority)
-data_files = glob.glob(sql_dir + data_dir + '*.sql')
+def get_every_query(sql_dir, table_dir, data_dir):
+    table_files = sorted(glob.glob(sql_dir + table_dir + '*.sql'), key=get_priority)
+    data_files = glob.glob(sql_dir + data_dir + '*.sql')
 
-all_queries = []
+    all_queries = []
 
-for table_file in table_files:
-    print(table_file + '\n')
-    table_queries = load_queries_from_file(table_file);
-    all_queries.extend(table_queries)
-    for data_file in data_files:
-        file_title = data_file.replace('_populate.sql', '').replace(data_dir, '')
-        print('\t' + file_title)
-        if table_file.replace('_init.sql', '').replace(table_dir, '') == file_title:
-            data_queries = load_queries_from_file(data_file)
-            all_queries.extend(data_queries)
-            data_files.remove(data_file)
+    for table_file in table_files:
+        print(table_file + '\n')
+        table_queries = load_queries_from_file(table_file);
+        all_queries.extend(table_queries)
+        for data_file in data_files:
+            file_title = data_file.replace('_populate.sql', '').replace(data_dir, '')
+            print('\t' + file_title)
+            if table_file.replace('_init.sql', '').replace(table_dir, '') == file_title:
+                data_queries = load_queries_from_file(data_file)
+                all_queries.extend(data_queries)
+                data_files.remove(data_file)
 
-database_name = '../draft23.db'
+    return all_queries
 
-connection = sqlite3.connect(database_name)
+def query_db(queries, database_name):
+    connection = sqlite3.connect(database_name)
 
-cursor = connection.cursor()
+    cursor = connection.cursor()
 
-for query in all_queries:
-    try:
-        cursor.execute(query)
-    except sqlite3.Error as er:
-        print(query + '\n')
-        print(er)
+    for query in queries:
+        try:
+            cursor.execute(query)
+        except sqlite3.Error as er:
+            print(query + '\n')
+            print(er)
 
-connection.commit()
-connection.close()
+    connection.commit()
+    connection.close()
+
+
+def insert_everything(sql_dir='../SQL', table_dir='/DDL/', data_dir='/DML/', database_name='../default.db'):
+    all_queries = get_every_query(sql_dir, table_dir, data_dir)
+    query_db(all_queries, database_name)
+
+
+if __name__ == "__main__":
+    insert_everything()
+
