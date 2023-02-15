@@ -1,4 +1,4 @@
-INSERT INTO stats(name, name_short)
+INSERT INTO stats(stat_name, name_short)
 VALUES ('ATTACK', 'ATK'),
        ('DEFENSE', 'DEF'),
        ('SPEED', 'SPD'),
