@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="f8017053-64c8-4e0c-a579-38a9839c24b7" name="Changes" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="ProjectId" id="2LwiUuVjdAIKpSQARhmzmAUJal2" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenDatabaseViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/deck/source/repos/misc/JRGEM23/SQL/DML/typechart_populate.sql&quot;
+  },
+  &quot;keyToStringList&quot;: {
+    &quot;DatabaseDriversLRU&quot;: [
+      &quot;sqlite&quot;
+    ],
+    &quot;RunConfigurationTargetLRU&quot;: [
+      &quot;f42b868f-dd00-4328-a5ce-e5261ded0022/schema/\&quot;main\&quot;&quot;
+    ],
+    &quot;com.intellij.ide.scratch.LRUPopupBuilder$1/&quot;: [
+      &quot;SQLite&quot;
+    ]
+  }
+}</component>
+  <component name="RunManager">
+    <configuration name="init" type="DatabaseScript">
+      <script-file value="$PROJECT_DIR$/DDL/typechart_init.sql" />
+      <script-file value="$PROJECT_DIR$/DML/typechart_populate.sql" />
+      <script-file value="$PROJECT_DIR$/DML/stats_populate.sql" />
+      <script-file value="$PROJECT_DIR$/DML/moves_populate.sql" />
+      <script-file value="$PROJECT_DIR$/DDL/moves_init.sql" />
+      <script-file value="$PROJECT_DIR$/DDL/stats_init.sql" />
+      <script-file value="$PROJECT_DIR$/DDL/skills_init.sql" />
+      <script-file value="$PROJECT_DIR$/DML/skills_populate.sql" />
+      <script-file value="$PROJECT_DIR$/DDL/monsters_init.sql" />
+      <script-file value="$PROJECT_DIR$/DML/monsters_populate.sql" />
+      <script-mode>FILE</script-mode>
+      <data-source id="f42b868f-dd00-4328-a5ce-e5261ded0022" namespace="schema/&quot;main&quot;" />
+      <method v="2" />
+    </configuration>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+</project>

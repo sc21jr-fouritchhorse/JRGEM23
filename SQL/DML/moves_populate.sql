@@ -14,7 +14,7 @@ VALUES ('BURN_EFFECT', NULL, (SELECT id FROM statuses WHERE status_name = 'BURN'
        ('DRAIN_EFFECT', (SELECT id FROM stats WHERE name_short = 'HP'), NULL, 50, NULL),
        ('DEF_DROP', (SELECT id FROM stats WHERE name_short = 'DEF'), NULL, 75, NULL),
        ('CRG+DEF_DROP', (SELECT id FROM stats WHERE name_short = 'CRG'), NULL, 75,
-        (SELECT id FROM move_effects WHERE effect_name = 'DEF_DROP'));
+						(SELECT id FROM move_effects WHERE effect_name = 'DEF_DROP'));
 
 INSERT INTO move_categories(category_name)
 VALUES('ATK/DEF'),

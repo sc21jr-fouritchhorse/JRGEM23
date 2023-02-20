@@ -10,9 +10,7 @@ CREATE TABLE skills (
 
 CREATE TABLE skill_member (
     id INTEGER PRIMARY KEY,
-    member_name TEXT NOT NULL,
-    descrip TEXT,
-    point_cost INTEGER NOT NULL,
+    required_exp INTEGER NOT NULL,
     move_id INTEGER NOT NULL,
     parent_skill INTEGER NOT NULL,
     next_member INTEGER,

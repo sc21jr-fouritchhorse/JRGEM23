@@ -65,5 +65,5 @@ def insert_everything(sql_dir='../SQL', table_dir='/DDL/', data_dir='/DML/', dat
 
 
 if __name__ == "__main__":
-    insert_everything()
+    insert_everything(database_name="draft23.db")
 

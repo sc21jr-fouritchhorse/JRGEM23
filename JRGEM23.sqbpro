@@ -1,0 +1,657 @@
+<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="/home/deck/source/repos/misc/JRGEM23/draft23.sqlite" readonly="0" foreign_keys="1" case_sensitive_like="0" temp_store="0" wal_autocheckpoint="1000" synchronous="2"/><attached/><window><main_tabs open="structure browser pragmas query" current="3"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="100"/><column_width id="3" width="3421"/><column_width id="4" width="0"/><expanded_item id="0" parent="1"/><expanded_item id="1" parent="1"/><expanded_item id="2" parent="1"/><expanded_item id="3" parent="1"/></tab_structure><tab_browse><current_table name="4,13:mainmonster_types"/><default_encoding codec=""/><browse_table_settings><table schema="main" name="monster_types" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths><column index="1" value="32"/><column index="2" value="88"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table></browse_table_settings></tab_browse><tab_sql><sql name="typechart_init.sql">--EXECUTION PRIORITY 1;
+DROP TABLE IF EXISTS type_matchups;
+DROP TABLE IF EXISTS monster_types;
+DROP TABLE IF EXISTS type_interactions;
+DROP TABLE IF EXISTS type_effectiveness;
+
+CREATE TABLE type_matchups (
+    id INTEGER PRIMARY KEY,
+    effect_name TEXT NOT NULL
+);
+
+CREATE TABLE monster_types(
+    id INTEGER PRIMARY KEY,
+    type_name TEXT NOT NULL
+);
+
+/*For now, this modifies the strength of the attack itself rather
+than (directly) calcing how much is taken from health*/
+CREATE TABLE type_interactions(
+    id INTEGER PRIMARY KEY,
+    effect_1 INTEGER NOT NULL,
+    effect_2 INTEGER NOT NULL,
+    multiplier FLOAT,
+    FOREIGN KEY (effect_1) REFERENCES type_matchups(id),
+    FOREIGN KEY (effect_2) REFERENCES type_matchups(id)
+);
+
+
+CREATE TABLE type_effectiveness(
+    id INTEGER PRIMARY KEY,
+    atk_type INTEGER NOT NULL,
+    def_type INTEGER NOT NULL,
+    effect INTEGER NOT NULL,
+    FOREIGN KEY (atk_type) REFERENCES monster_types(id),
+    FOREIGN KEY (def_type) REFERENCES monster_types(id),
+    FOREIGN KEY (effect) REFERENCES type_matchups(id)
+);
+</sql><sql name="stats_init.sql">--EXECUTION PRIORITY 2;
+DROP TABLE IF EXISTS stats;
+DROP TABLE IF EXISTS stat_instances;
+DROP TABLE IF EXISTS stat_collections;
+DROP INDEX IF EXISTS stat_count;
+
+
+CREATE TABLE stats (
+    id INTEGER PRIMARY KEY,
+    stat_name TEXT NOT NULL,
+    name_short TEXT NOT NULL
+);
+
+CREATE TABLE stat_collections(
+    id INTEGER PRIMARY KEY,
+    owner_id INTEGER NOT NULL,
+    atk_instance INTEGER NOT NULL,
+    def_instance INTEGER NOT NULL,
+    spd_instance INTEGER NOT NULL,
+    crg_instance INTEGER NOT NULL,
+    wsd_instance INTEGER NOT NULL,
+    FOREIGN KEY (atk_instance) REFERENCES stat_instances(id),
+    FOREIGN KEY (def_instance) REFERENCES stat_instances(id),
+    FOREIGN KEY (spd_instance) REFERENCES stat_instances(id),
+    FOREIGN KEY (crg_instance) REFERENCES stat_instances(id),
+    FOREIGN KEY (wsd_instance) REFERENCES stat_instances(id)
+);
+
+CREATE TABLE stat_instances(
+    id INTEGER PRIMARY KEY,
+    stat_value INTEGER NOT NULL,
+    stat_type INTEGER NOT NULL,
+    set_code INTEGER NOT NULL,
+    FOREIGN KEY (stat_type) REFERENCES stats(id)
+);
+</sql><sql name="skills_init.sql">--EXECUTION PRIORITY 4;
+DROP TABLE IF EXISTS skills;
+DROP TABLE IF EXISTS skill_member;
+
+CREATE TABLE skills (
+    id INTEGER PRIMARY KEY,
+    skill_name TEXT NOT NULL,
+    descrip TEXT
+);
+
+CREATE TABLE skill_member (
+    id INTEGER PRIMARY KEY,
+    required_exp INTEGER NOT NULL,
+    move_id INTEGER NOT NULL,
+    parent_skill INTEGER NOT NULL,
+    next_member INTEGER,
+    FOREIGN KEY (move_id) REFERENCES moves(id),
+    FOREIGN KEY (parent_skill) REFERENCES skills(id),
+    FOREIGN KEY (next_member) REFERENCES skill_member(id)
+);
+</sql><sql name="moves_init.sql">--EXECUTION PRIORITY 3;
+DROP TABLE IF EXISTS moves;
+DROP TABLE IF EXISTS statuses;
+DROP TABLE IF EXISTS move_effects;
+DROP TABLE IF EXISTS move_categories;
+
+CREATE TABLE statuses
+(
+    id             INTEGER PRIMARY KEY,
+    status_name    TEXT    NOT NULL,
+    short_name     TEXT    NOT NULL,
+    min_turns      INTEGER NOT NULL,
+    max_turns      INTEGER NOT NULL,
+    affected_stat  INTEGER,
+    factor_percent INTEGER,
+    FOREIGN KEY (affected_stat) REFERENCES stats (id)
+);
+
+CREATE TABLE move_effects
+(
+    id             INTEGER PRIMARY KEY,
+    effect_name    TEXT NOT NULL,
+    related_stat   INTEGER,
+    related_status INTEGER,
+    factor_percent INTEGER NOT NULL,
+    linked_effect  INTEGER,
+    FOREIGN KEY (related_stat) REFERENCES stats (id),
+    FOREIGN KEY (related_status) REFERENCES statuses(id),
+    FOREIGN KEY (linked_effect) REFERENCES move_effects (id)
+);
+
+CREATE TABLE move_categories
+(
+    id INTEGER PRIMARY KEY,
+    category_name TEXT NOT NULL
+);
+
+CREATE TABLE moves
+(
+    id             INTEGER PRIMARY KEY,
+    move_name           TEXT    NOT NULL,
+    descrip        TEXT,
+    power          INTEGER NOT NULL,
+    cost           INTEGER NOT NULL,
+    hit_percent    INTEGER NOT NULL,
+    effect_percent INTEGER NOT NULL,
+    move_category  INTEGER NOT NULL,
+    type           INTEGER NOT NULL,
+    effect         INTEGER,
+    FOREIGN KEY (type) REFERENCES monster_types (id),
+    FOREIGN KEY (effect) REFERENCES move_effects (id),
+    FOREIGN KEY (move_category) REFERENCES move_categories(id)
+);</sql><sql name="typechart_populate.sql">INSERT INTO type_matchups(effect_name)
+VALUES ('HEALS'),
+('IMMUNE'),
+('WEAK'),
+('NORMAL'),
+('STRONG');
+
+INSERT INTO monster_types(type_name)
+VALUES ('FLAME'),
+('WATER'),
+('PLANT'),
+('ICE'),
+('EARTH'),
+('WIND'),
+('BOLT'),
+('SPIRIT'),
+('HERO'),
+('HOLY'),
+('DEMON'),
+('BEAST'),
+('UNDEAD'),
+('DRAGON'),
+('NATURE'),
+('INDUST');
+
+INSERT INTO type_interactions(effect_1, effect_2, multiplier)
+SELECT e1.id, e2.id,
+    CASE e2.effect_name
+        WHEN 'HEALS'  THEN (-2.0)
+        WHEN 'IMMUNE' THEN ( 0.0)
+        WHEN 'WEAK'   THEN ( 1.0)
+        WHEN 'NORMAL' THEN ( 2.0)
+        WHEN 'STRONG' THEN ( 4.0)
+    END
+FROM type_matchups e1
+JOIN 
+    type_matchups e2 
+    ON e1.effect_name = 'STRONG';
+
+
+INSERT INTO type_interactions(effect_1, effect_2, multiplier)
+SELECT 
+    e1.id, e2.id,
+    CASE e2.effect_name
+        WHEN 'HEALS'  THEN (-0.25)
+        WHEN 'IMMUNE' THEN ( 0.0)
+        WHEN 'WEAK'   THEN ( 0.0)
+        WHEN 'NORMAL' THEN ( 0.0)
+        WHEN 'STRONG' THEN ( 0.5)
+    END
+FROM type_matchups e1
+JOIN type_matchups e2 ON e1.effect_name = 'IMMUNE';
+
+
+INSERT INTO type_interactions(effect_1, effect_2, multiplier)
+SELECT e1.id, e2.id,
+    CASE e2.effect_name
+        WHEN 'HEALS'  THEN (-1.5)
+        WHEN 'IMMUNE' THEN ( 0.0)
+        WHEN 'WEAK'   THEN ( 0.25)
+        WHEN 'NORMAL' THEN ( 0.5)
+        WHEN 'STRONG' THEN ( 1.0)
+    END
+FROM type_matchups e1
+JOIN type_matchups e2 ON e1.effect_name = 'WEAK';
+
+
+INSERT INTO type_interactions(effect_1, effect_2, multiplier)
+SELECT e1.id, e2.id,
+    CASE e2.effect_name
+        WHEN 'HEALS'  THEN ( 2.0)
+        WHEN 'IMMUNE' THEN ( 0.0)
+        WHEN 'WEAK'   THEN (-0.5)
+        WHEN 'NORMAL' THEN (-1.0)
+        WHEN 'STRONG' THEN (-2.0)
+    END
+FROM type_matchups e1
+JOIN type_matchups e2 ON e1.effect_name = 'HEALS';
+
+
+
+INSERT INTO type_effectiveness(def_type, atk_type, effect)
+SELECT td.id, ta.id,
+    CASE ta.type_name
+        WHEN 'FLAME'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'WATER'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'PLANT'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'ICE'    THEN (SELECT id FROM type_matchups WHERE effect_name = 'WEAK')
+        WHEN 'EARTH'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'WIND'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'BOLT'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'SPIRIT' THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'HERO'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'HOLY'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'DEMON'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'BEAST'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'UNDEAD' THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'DRAGON' THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'NATURE' THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'INDUST' THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+    END
+FROM monster_types ta
+JOIN monster_types td ON td.type_name = 'FLAME';
+
+INSERT INTO type_effectiveness(def_type, atk_type, effect)
+SELECT td.id, ta.id,
+    CASE ta.type_name
+        WHEN 'FLAME'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'WEAK')
+        WHEN 'WATER'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'PLANT'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'ICE'    THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'EARTH'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'WEAK')
+        WHEN 'WIND'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'BOLT'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'SPIRIT' THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'HERO'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'HOLY'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'DEMON'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'BEAST'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'UNDEAD' THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'DRAGON' THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'NATURE' THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'INDUST' THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+    END
+FROM monster_types ta
+JOIN monster_types td ON td.type_name = 'WATER';
+
+
+INSERT INTO type_effectiveness(def_type, atk_type, effect)
+SELECT td.id, ta.id,
+    CASE ta.type_name
+        WHEN 'FLAME'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'WATER'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'PLANT'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'WEAK')
+        WHEN 'ICE'    THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'EARTH'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'WIND'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'WEAK')
+        WHEN 'BOLT'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'SPIRIT' THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'HERO'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'HOLY'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'DEMON'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'BEAST'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'UNDEAD' THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'DRAGON' THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'NATURE' THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'INDUST' THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+    END
+FROM monster_types ta
+JOIN monster_types td ON td.type_name = 'PLANT';
+
+
+INSERT INTO type_effectiveness(def_type, atk_type, effect)
+SELECT td.id, ta.id,
+    CASE ta.type_name
+        WHEN 'FLAME'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'WATER'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'PLANT'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'WEAK')
+        WHEN 'ICE'    THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'EARTH'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'WEAK')
+        WHEN 'WIND'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'BOLT'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'SPIRIT' THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'HERO'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'HOLY'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'DEMON'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'BEAST'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'WEAK')
+        WHEN 'UNDEAD' THEN (SELECT id FROM type_matchups WHERE effect_name = 'WEAK')
+        WHEN 'DRAGON' THEN (SELECT id FROM type_matchups WHERE effect_name = 'WEAK')
+        WHEN 'NATURE' THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'INDUST' THEN (SELECT id FROM type_matchups WHERE effect_name = 'WEAK')
+    END
+FROM monster_types ta
+JOIN monster_types td ON td.type_name = 'ICE';
+
+
+INSERT INTO type_effectiveness(def_type, atk_type, effect)
+SELECT td.id, ta.id,
+    CASE ta.type_name
+        WHEN 'FLAME'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'IMMUNE')
+        WHEN 'WATER'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'PLANT'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'ICE'    THEN (SELECT id FROM type_matchups WHERE effect_name = 'WEAK')
+        WHEN 'EARTH'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'WIND'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'WEAK')
+        WHEN 'BOLT'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'IMMUNE')
+        WHEN 'SPIRIT' THEN (SELECT id FROM type_matchups WHERE effect_name = 'IMMUNE')
+        WHEN 'HERO'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'HOLY'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'DEMON'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'BEAST'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'UNDEAD' THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'DRAGON' THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'NATURE' THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'INDUST' THEN (SELECT id FROM type_matchups WHERE effect_name = 'WEAK')
+    END
+FROM monster_types ta
+JOIN monster_types td ON td.type_name = 'EARTH';
+
+
+INSERT INTO type_effectiveness(def_type, atk_type, effect)
+SELECT td.id, ta.id,
+    CASE ta.type_name
+        WHEN 'FLAME'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'WEAK')
+        WHEN 'WATER'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'IMMUNE')
+        WHEN 'PLANT'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'WEAK')
+        WHEN 'ICE'    THEN (SELECT id FROM type_matchups WHERE effect_name = 'IMMUNE')
+        WHEN 'EARTH'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'IMMUNE')
+        WHEN 'WIND'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'BOLT'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'SPIRIT' THEN (SELECT id FROM type_matchups WHERE effect_name = 'IMMUNE')
+        WHEN 'HERO'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'HOLY'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'DEMON'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'BEAST'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'WEAK')
+        WHEN 'UNDEAD' THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'DRAGON' THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'NATURE' THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'INDUST' THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+    END
+FROM monster_types ta
+JOIN monster_types td ON td.type_name = 'WIND';
+
+
+INSERT INTO type_effectiveness(def_type, atk_type, effect)
+SELECT td.id, ta.id,
+    CASE ta.type_name
+        WHEN 'FLAME'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'WEAK')
+        WHEN 'WATER'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'PLANT'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'ICE'    THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'EARTH'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'WIND'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'BOLT'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'SPIRIT' THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'HERO'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'HOLY'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'DEMON'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'BEAST'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'WEAK')
+        WHEN 'UNDEAD' THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'DRAGON' THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'NATURE' THEN (SELECT id FROM type_matchups WHERE effect_name = 'WEAK')
+        WHEN 'INDUST' THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+    END
+FROM monster_types ta
+JOIN monster_types td ON td.type_name = 'BOLT';
+
+
+INSERT INTO type_effectiveness(def_type, atk_type, effect)
+SELECT td.id, ta.id,
+    CASE ta.type_name
+        WHEN 'FLAME'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'WATER'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'PLANT'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'ICE'    THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'EARTH'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'IMMUNE')
+        WHEN 'WIND'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'BOLT'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'SPIRIT' THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'HERO'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'IMMUNE')
+        WHEN 'HOLY'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'DEMON'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'BEAST'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'IMMUNE')
+        WHEN 'UNDEAD' THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'DRAGON' THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'NATURE' THEN (SELECT id FROM type_matchups WHERE effect_name = 'IMMUNE')
+        WHEN 'INDUST' THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+    END
+FROM monster_types ta
+JOIN monster_types td ON td.type_name = 'SPIRIT';
+
+
+INSERT INTO type_effectiveness(def_type, atk_type, effect)
+SELECT td.id, ta.id,
+    CASE ta.type_name
+        WHEN 'FLAME'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'WATER'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'PLANT'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'ICE'    THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'EARTH'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'WIND'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'BOLT'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'IMMUNE')
+        WHEN 'SPIRIT' THEN (SELECT id FROM type_matchups WHERE effect_name = 'WEAK')
+        WHEN 'HERO'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'HOLY'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'DEMON'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'BEAST'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'WEAK')
+        WHEN 'UNDEAD' THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'DRAGON' THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'NATURE' THEN (SELECT id FROM type_matchups WHERE effect_name = 'WEAK')
+        WHEN 'INDUST' THEN (SELECT id FROM type_matchups WHERE effect_name = 'IMMUNE')
+    END
+FROM monster_types ta
+JOIN monster_types td ON td.type_name = 'HERO';
+
+
+INSERT INTO type_effectiveness(def_type, atk_type, effect)
+SELECT td.id, ta.id,
+    CASE ta.type_name
+        WHEN 'FLAME'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'WEAK')
+        WHEN 'WATER'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'PLANT'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'ICE'    THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'EARTH'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'WIND'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'BOLT'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'SPIRIT' THEN (SELECT id FROM type_matchups WHERE effect_name = 'WEAK')
+        WHEN 'HERO'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'HOLY'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'DEMON'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'IMMUNE')
+        WHEN 'BEAST'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'UNDEAD' THEN (SELECT id FROM type_matchups WHERE effect_name = 'IMMUNE')
+        WHEN 'DRAGON' THEN (SELECT id FROM type_matchups WHERE effect_name = 'IMMUNE')
+        WHEN 'NATURE' THEN (SELECT id FROM type_matchups WHERE effect_name = 'WEAK')
+        WHEN 'INDUST' THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+    END
+FROM monster_types ta
+JOIN monster_types td ON td.type_name = 'HOLY';
+
+
+INSERT INTO type_effectiveness(def_type, atk_type, effect)
+SELECT td.id, ta.id,
+    CASE ta.type_name
+        WHEN 'FLAME'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'WATER'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'PLANT'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'ICE'    THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'EARTH'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'WIND'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'BOLT'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'SPIRIT' THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'HERO'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'HOLY'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'DEMON'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'BEAST'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'WEAK')
+        WHEN 'UNDEAD' THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'DRAGON' THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'NATURE' THEN (SELECT id FROM type_matchups WHERE effect_name = 'WEAK')
+        WHEN 'INDUST' THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+    END
+FROM monster_types ta
+JOIN monster_types td ON td.type_name = 'DEMON';
+
+
+INSERT INTO type_effectiveness(def_type, atk_type, effect)
+SELECT td.id, ta.id,
+    CASE ta.type_name
+        WHEN 'FLAME'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'WATER'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'PLANT'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'ICE'    THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'EARTH'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'WIND'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'BOLT'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'SPIRIT' THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'HERO'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'HOLY'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'DEMON'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'BEAST'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'UNDEAD' THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'DRAGON' THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'NATURE' THEN (SELECT id FROM type_matchups WHERE effect_name = 'WEAK')
+        WHEN 'INDUST' THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+    END
+FROM monster_types ta
+JOIN monster_types td ON td.type_name = 'BEAST';
+
+
+INSERT INTO type_effectiveness(def_type, atk_type, effect)
+SELECT td.id, ta.id,
+    CASE ta.type_name
+        WHEN 'FLAME'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'WATER'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'PLANT'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'ICE'    THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'EARTH'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'WEAK')
+        WHEN 'WIND'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'WEAK')
+        WHEN 'BOLT'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'SPIRIT' THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'HERO'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'HOLY'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'DEMON'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'BEAST'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'UNDEAD' THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'DRAGON' THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'NATURE' THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'INDUST' THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+    END
+FROM monster_types ta
+JOIN monster_types td ON td.type_name = 'UNDEAD';
+
+
+INSERT INTO type_effectiveness(def_type, atk_type, effect)
+SELECT td.id, ta.id,
+    CASE ta.type_name
+        WHEN 'FLAME'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'WATER'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'PLANT'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'ICE'    THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'EARTH'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'WIND'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'BOLT'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'SPIRIT' THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'HERO'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'HOLY'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'DEMON'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'BEAST'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'UNDEAD' THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'DRAGON' THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'NATURE' THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'INDUST' THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+    END
+FROM monster_types ta
+JOIN monster_types td ON td.type_name = 'DRAGON';
+
+
+INSERT INTO type_effectiveness(def_type, atk_type, effect)
+SELECT td.id, ta.id,
+    CASE ta.type_name
+        WHEN 'FLAME'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'WATER'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'PLANT'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'ICE'    THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'EARTH'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'WIND'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'BOLT'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'SPIRIT' THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'HERO'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'HOLY'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'DEMON'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'BEAST'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'UNDEAD' THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'DRAGON' THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'NATURE' THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'INDUST' THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+    END
+FROM monster_types ta
+JOIN monster_types td ON td.type_name = 'NATURE';
+
+
+INSERT INTO type_effectiveness(def_type, atk_type, effect)
+SELECT td.id, ta.id,
+    CASE ta.type_name
+        WHEN 'FLAME'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'WATER'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'PLANT'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'WEAK')
+        WHEN 'ICE'    THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'EARTH'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'WIND'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'BOLT'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'SPIRIT' THEN (SELECT id FROM type_matchups WHERE effect_name = 'IMMUNE')
+        WHEN 'HERO'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'HOLY'   THEN (SELECT id FROM type_matchups WHERE effect_name = 'STRONG')
+        WHEN 'DEMON'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'BEAST'  THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'UNDEAD' THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+        WHEN 'DRAGON' THEN (SELECT id FROM type_matchups WHERE effect_name = 'NORMAL')
+        WHEN 'NATURE' THEN (SELECT id FROM type_matchups WHERE effect_name = 'WEAK')
+        WHEN 'INDUST' THEN (SELECT id FROM type_matchups WHERE effect_name = 'HEALS')
+    END
+FROM monster_types ta
+JOIN monster_types td ON td.type_name = 'INDUSTRIAL';
+</sql><sql name="skills_populate.sql">INSERT INTO skills(skill_name)
+VALUES ('Smoker I'),
+       ('Drinker I'),
+       ('Garden Pest'),
+       ('Street Rodent'),
+       ('Street Bird');
+
+INSERT INTO skill_member(parent_skill, move_id, required_exp, next_member)</sql><sql name="moves_populate.sql">INSERT INTO statuses(status_name, short_name, min_turns, max_turns, affected_stat, factor_percent)
+VALUES ('POISON', 'PSN', 3, 10, (SELECT id FROM stats WHERE name_short = 'DEF'), 75),
+       ('BAD POISON', 'XL_PSN', 2, 8, (SELECT id FROM stats WHERE name_short = 'DEF'), 50),
+       ('SLEEP', 'SLP', 2, 7, 0, 0),
+       ('PARALYSIS', 'PRLS', 5, 10, (SELECT id FROM stats WHERE name_short = 'SPD'), 25),
+       ('CONFUSED', 'CNFS', 2, 7, (SELECT id FROM stats WHERE name_short = 'ATK'), 150),
+       ('LOVESTRUCK', 'LV', 5, 15, (SELECT id FROM stats WHERE name_short = 'WSD'), 50),
+       ('PANIC', 'PNC', 5, 15, (SELECT id FROM stats WHERE name_short = 'CRG'), 50),
+       ('BURN', 'BRN', 5, 10, (SELECT id FROM stats WHERE name_short = 'ATK'), 50);
+
+INSERT INTO move_effects(effect_name, related_stat, related_status, factor_percent, linked_effect)
+VALUES ('BURN_EFFECT', NULL, (SELECT id FROM statuses WHERE status_name = 'BURN'), 0, NULL),
+       --note to self, create check in the application that links to the power of the calling move
+       ('DRAIN_EFFECT', (SELECT id FROM stats WHERE name_short = 'HP'), NULL, 50, NULL),
+       ('DEF_DROP', (SELECT id FROM stats WHERE name_short = 'DEF'), NULL, 75, NULL),
+       ('CRG+DEF_DROP', (SELECT id FROM stats WHERE name_short = 'CRG'), NULL, 75,
+						(SELECT id FROM move_effects WHERE effect_name = 'DEF_DROP'));
+
+INSERT INTO move_categories(category_name)
+VALUES('ATK/DEF'),
+      ('CRG/WSD'),
+      ('EFFECT'),
+      ('DEF/ATK');
+
+INSERT INTO moves(move_name, type, move_category, power, cost, hit_percent, effect_percent, effect)
+VALUES('Blister', (SELECT id FROM monster_types WHERE type_name = 'FLAME'),
+       (SELECT id FROM move_categories WHERE category_name = 'CRG/WSD'), 10, 0, 100, 25,
+       (SELECT id FROM move_effects WHERE effect_name = 'BURN_EFFECT')),
+      ('Scream', (SELECT id FROM monster_types WHERE type_name = 'BEAST'),
+       (SELECT id FROM move_categories WHERE category_name = 'EFFECT'), 0, 5, 0, 65,
+       (SELECT id FROM move_effects WHERE effect_name = 'CRG+DEF_DROP')),
+      ('Claw',  (SELECT id FROM monster_types WHERE type_name = 'BEAST'),
+       (SELECT id FROM move_categories WHERE category_name = 'ATK/DEF'), 12, 0,
+       100, 0, NULL);
+
+</sql><sql name="stats_populate.sql">INSERT INTO stats(stat_name, name_short)
+VALUES ('ATTACK', 'ATK'),
+       ('DEFENSE', 'DEF'),
+       ('SPEED', 'SPD'),
+       ('COURAGE', 'CRG'),
+       ('WISDOM', 'WSD');
+--rest of the insertions are in monsters_populate
+
+</sql><current_tab id="5"/></tab_sql></sqlb_project>
