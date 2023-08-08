@@ -7,7 +7,7 @@ CREATE table species(
     id INTEGER PRIMARY KEY,
     name TEXT NOT NULL);
 
-CREATE TABLE stastitic(
+CREATE TABLE statistic(
 	id INTEGER PRIMARY KEY,
 	/*This references either the species (if a base stat) or the instance of the monster(if statxp or genetics)*/
 	holder_id_fk INTEGER NOT NULL,
@@ -17,8 +17,9 @@ CREATE TABLE stastitic(
 	
 CREATE TABLE base_stats(
     id INTEGER PRIMARY KEY,
+    m_id INTEGER NOT NULL,
     atk INTEGER NOT NULL,
-    dfs INTEGER NOT NULL,
+    def INTEGER NOT NULL,
     crg INTEGER NOT NULL,
     wsd INTEGER NOT NULL,
     spd INTEGER NOT NULL,
@@ -26,12 +27,12 @@ CREATE TABLE base_stats(
     mp INTEGER NOT NULL,
     FOREIGN KEY (m_id) REFERENCES species(id),
 	FOREIGN KEY (atk) REFERENCES statistic(id),
-	FOREIGN KEY (dfs) REFERENCES statistic(id),
+	FOREIGN KEY (def) REFERENCES statistic(id),
 	FOREIGN KEY (spd) REFERENCES statistic(id),
 	FOREIGN KEY (crg) REFERENCES statistic(id),
 	FOREIGN KEY (wsd) REFERENCES statistic(id),
 	FOREIGN KEY (hp) REFERENCES statistic(id),
-	FOREIGN KEY (mp) REFERENCES statistic(id),
+	FOREIGN KEY (mp) REFERENCES statistic(id)
 );
 
 CREATE table type_combos(
